@@ -8,7 +8,7 @@
   <meta name="author" content="">
   <link rel="icon" href="favicon.ico">
 
-  <title>Dashboard Template for Bootstrap</title>
+  <title>Stocks Web - Anthony Lionti</title>
 
   <!-- Bootstrap core CSS -->
 
@@ -22,11 +22,12 @@
 
 <body>
   <nav class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0">
-    <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="#">Anthony Lionti</a>
-    <input id="box" class="form-control form-control-dark w-100" type="text" placeholder="Search" aria-label="Search">
+    <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="#">Stocks Web</a>
+    <input id="box" class="form-control form-control-dark w-100" type="text" placeholder="Search for symbol ex: MSFT, TSX:TD"
+      aria-label="Search">
     <ul class="navbar-nav px-3">
       <li class="nav-item text-nowrap">
-        <a class="nav-link" href="#">Sign out</a>
+        <a class="nav-link" href="#">Sign in</a>
       </li>
     </ul>
   </nav>
@@ -75,7 +76,7 @@
           </ul>
 
           <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
-            <span>Saved reports</span>
+            <span>My Watchlist</span>
             <a class="d-flex align-items-center text-muted" href="#">
               <span data-feather="plus-circle"></span>
             </a>
@@ -111,27 +112,30 @@
 
       <main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
         <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
-          <h1 class="h2">Stock Name</h1>
+          <h1 class="h2" id="stockName">Stock Name</h1>
           <div class="btn-toolbar mb-2 mb-md-0">
             <div class="btn-group mr-2">
               <button class="btn btn-sm btn-outline-secondary">Share</button>
-              <button class="btn btn-sm btn-outline-secondary" id="export" onclick="location.href = 'https://www.alphavantage.co/query?function=TIME_SERIES_DAILY_ADJUSTED&symbol=MSFT&apikey=XUEAGBE7E6O2CUCH&datatype=csv';">Export</button>
+              <button class="btn btn-sm btn-outline-secondary" id="export">Export CSV</button>
             </div>
 
             <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" id="dropdownMenuButton"
               data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
               <span data-feather="calendar"></span>
-              Intraday
+              <span id="dropDownText">Intraday</span>
             </button>
-            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-              <a class="dropdown-item" href="#">Intraday</a>
-              <a class="dropdown-item" href="#">Daily</a>
-              <a class="dropdown-item" href="#">Weekly</a>
-              <a class="dropdown-item" href="#">Monthly</a>
-            </div>
+            <ul id="demolist" class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+              <li><a class="dropdown-item" href="#">Intraday</a></li>
+              <li><a class="dropdown-item" href="#">Daily</a></li>
+              <li><a class="dropdown-item" href="#">Weekly</a></li>
+              <li><a class="dropdown-item" href="#">Monthly</a></li>
+            </ul>
           </div>
         </div>
-
+        <div class="progress">
+          <div class="progress-bar" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 10%;">
+          </div>
+        </div>
         <div id="chart_div"></div>
 
         <h2>Stock Statistics</h2>
@@ -266,10 +270,10 @@
     </div>
   </div>
   <footer class="footer">
-      <div class="container">
-        <span class="text-muted">Place sticky footer content here.</span>
-      </div>
-    </footer>
+    <div class="container">
+      <span class="text-muted">&copy Anthony Lionti</span>
+    </div>
+  </footer>
 
   <!-- Bootstrap core JavaScript
     ================================================== -->
@@ -289,37 +293,68 @@
   <!-- Graphs -->
   <script>
     var json;
-    var chartData = new Array();
+    var chartData;
     var counter = 0;
-    var row = "";
+    var metaData;
+    var url;
+    var symbol = "MSFT";
+    var range = "Intraday";
+    var rangeName;
 
 
-    $.ajax({
-      url: "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=MSFT&apikey=XUEAGBE7E6O2CUCH",
-      dataType: 'json',
-      contentType: "application/json",
-      async: false,
-      success: function (d) {
-        // $.each(d["Time Series (5min)"], function (key, val) {
-        $.each(d["Time Series (Daily)"], function (key, val) {
-          var date = key.split(" ")[0].split("-");
-          //var time = key.split(" ")[1].split(":");
-          //chartData.unshift(new Array(new Date(date[0], date[1] - 1, date[2], time[0], time[1], time[2]), parseFloat(val["4. close"])));
-          chartData.unshift(new Array(new Date(date[0], date[1] - 1, date[2]), parseFloat(val["4. close"])));
-          // new Date(2014, 10, 15, 6, 30)],
-          // console.log(date);
+    doChart(symbol, range);
+    $("#w3s").attr("href", "https://www.w3schools.com/jquery/");
 
-        });
+    function doChart(sym, range) {
+      $(".progress").show();
+      $(".progress-bar").attr("style", "width: 10%;");
 
+      chartData = new Array();
+
+      url = "https://www.alphavantage.co/query?function=TIME_SERIES_" + range + "&symbol=" + sym + "&apikey=XUEAGBE7E6O2CUCH";
+
+      if (range == "Daily") {
+        rangeName = "Time Series (Daily)";
+      } else if (range == "Weekly") {
+        rangeName = "Weekly Time Series";
+      } else if (range == "Monthly") {
+        rangeName = "Monthly Time Series";
+      } else {
+        rangeName = "Time Series (5min)";
+        url = "https://www.alphavantage.co/query?function=TIME_SERIES_" + range + "&symbol=" + sym + "&interval=5min&apikey=XUEAGBE7E6O2CUCH";
       }
-    });
+
+      $.ajax({
+        url: url,
+        dataType: 'json',
+        contentType: "application/json",
+        async: false,
+        success: function (d) {
+          metaData = d["Meta Data"];
+
+          $('#stockName').text(metaData["2. Symbol"].toUpperCase());
+          //$('#stockTime').text(metaData["3. Last Refreshed"] + " " + metaData["5. Time Zone"]);
+          // $.each(d["Time Series (5min)"], function (key, val) {
+          $.each(d[rangeName], function (key, val) {
+            var date = key.split(" ")[0].split("-");
+            //var time = key.split(" ")[1].split(":");
+            //chartData.unshift(new Array(new Date(date[0], date[1] - 1, date[2], time[0], time[1], time[2]), parseFloat(val["4. close"])));
+            chartData.unshift(new Array(new Date(date[0], date[1] - 1, date[2]), parseFloat(val["4. close"])));
+            // new Date(2014, 10, 15, 6, 30)],
+            // console.log(date);
+
+          });
+
+        }
+      });
 
 
-    // Load the Visualization API and the corechart package.
-    google.charts.load('current', { packages: ['corechart', 'line'] });
+      // Load the Visualization API and the corechart package.
+      google.charts.load('current', { packages: ['corechart', 'line'] });
 
-    // Set a callback to run when the Google Visualization API is loaded.
-    google.charts.setOnLoadCallback(drawChart);
+      // Set a callback to run when the Google Visualization API is loaded.
+      google.charts.setOnLoadCallback(drawChart);
+    }
 
     // Callback that creates and populates a data table,
     // instantiates the pie chart, passes in the data and
@@ -334,17 +369,20 @@
       data.addColumn('number', 'Close');
 
       if (chartData.length == 0) {
-        console.log("yes");
+        //doChart(symbol, range);
+        alert("error");
+        // break;
       }
       data.addRows(chartData);
 
+      $(".progress-bar").attr("style", "width: 100%;");
 
       // Set chart options
       var options = {
-        'title': 'Microsoft',
+        'title': 'Last Updated ' + metaData["3. Last Refreshed"] + " " + metaData["5. Time Zone"],
         legend: 'none',
         hAxis: {
-          title: 'Time',
+          title: '',
           //showTextEvery: 0,
           //slantedText: true,
           //slantedTextAngle: 90,
@@ -352,7 +390,7 @@
           //viewWindow:{max:15},
         },
         vAxis: {
-          title: 'Close',
+          title: '',
           format: 'currency',
         },
         legend: {
@@ -367,16 +405,33 @@
       // Instantiate and draw our chart, passing in some options.
       var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
       chart.draw(data, options);
+      $(".progress").hide();
     }
 
     $('#box').bind("enterKey", function (e) {
-      alert("Enter");
+
+      //alert("Enter");
+      symbol = $('#box').val();
+      doChart(symbol, range);
     });
     $('#box').keyup(function (e) {
       if (e.keyCode == 13) {
         $(this).trigger("enterKey");
       }
     });
+
+    $("#export").click(function () {
+      location.href = 'https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=' + metaData["2. Symbol"].toUpperCase() + '&apikey=XUEAGBE7E6O2CUCH&datatype=csv';
+    });
+    $('#demolist li').on('click', function () {
+      range = this.textContent;
+      $("#dropDownText").text(range);
+
+      doChart(symbol, range);
+    });
+
+
+
   </script>
 </body>
 
