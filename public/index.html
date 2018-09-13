@@ -293,7 +293,7 @@
   <!-- Graphs -->
   <script>
     var json;
-    var chartData;
+    //var chartData;
     var counter = 0;
     var metaData;
     var url;
@@ -302,16 +302,19 @@
     var rangeName;
 
 
-    doChart(symbol, range);
+    // doChart();
+    // getData();
+    google.charts.load('current', { packages: ['corechart', 'line'] });
+
+    google.charts.setOnLoadCallback(getData);
+
     $("#w3s").attr("href", "https://www.w3schools.com/jquery/");
 
-    function doChart(sym, range) {
+    function getData() {
       $(".progress").show();
       $(".progress-bar").attr("style", "width: 10%;");
 
-      chartData = new Array();
-
-      url = "https://www.alphavantage.co/query?function=TIME_SERIES_" + range + "&symbol=" + sym + "&apikey=XUEAGBE7E6O2CUCH";
+      url = "https://www.alphavantage.co/query?function=TIME_SERIES_" + range + "&symbol=" + symbol + "&apikey=XUEAGBE7E6O2CUCH";
 
       if (range == "Daily") {
         rangeName = "Time Series (Daily)";
@@ -321,65 +324,76 @@
         rangeName = "Monthly Time Series";
       } else {
         rangeName = "Time Series (5min)";
-        url = "https://www.alphavantage.co/query?function=TIME_SERIES_" + range + "&symbol=" + sym + "&interval=5min&apikey=XUEAGBE7E6O2CUCH";
+        url = "https://www.alphavantage.co/query?function=TIME_SERIES_" + range + "&symbol=" + symbol + "&interval=5min&apikey=XUEAGBE7E6O2CUCH";
       }
+
+
 
       $.ajax({
         url: url,
         dataType: 'json',
         contentType: "application/json",
-        async: false,
-        success: function (d) {
-          metaData = d["Meta Data"];
-
-          $('#stockName').text(metaData["2. Symbol"].toUpperCase());
-          //$('#stockTime').text(metaData["3. Last Refreshed"] + " " + metaData["5. Time Zone"]);
-          // $.each(d["Time Series (5min)"], function (key, val) {
-          $.each(d[rangeName], function (key, val) {
-            var date = key.split(" ")[0].split("-");
-            //var time = key.split(" ")[1].split(":");
-            //chartData.unshift(new Array(new Date(date[0], date[1] - 1, date[2], time[0], time[1], time[2]), parseFloat(val["4. close"])));
-            chartData.unshift(new Array(new Date(date[0], date[1] - 1, date[2]), parseFloat(val["4. close"])));
-            // new Date(2014, 10, 15, 6, 30)],
-            // console.log(date);
-
-          });
-
-        }
+        success: doChart
       });
 
 
       // Load the Visualization API and the corechart package.
-      google.charts.load('current', { packages: ['corechart', 'line'] });
 
       // Set a callback to run when the Google Visualization API is loaded.
-      google.charts.setOnLoadCallback(drawChart);
+      //google.charts.setOnLoadCallback(doChart);
     }
 
     // Callback that creates and populates a data table,
     // instantiates the pie chart, passes in the data and
     // draws it.
-    function drawChart() {
+    function doChart(d) {
+
+      var chartData = new Array();
+
+
+      metaData = d["Meta Data"];
+
+      $('#stockName').text(metaData["2. Symbol"].toUpperCase());
+      //$('#stockTime').text(metaData["3. Last Refreshed"] + " " + metaData["5. Time Zone"]);
+      // $.each(d["Time Series (5min)"], function (key, val) {
+      $.each(d[rangeName], function (key, val) {
+        var date = key.split(" ")[0].split("-");
+
+        if (rangeName.includes("5min")) {
+          var time = key.split(" ")[1].split(":");
+          chartData.unshift(new Array(new Date(date[0], date[1] - 1, date[2], time[0], time[1], time[2]), parseFloat(val["4. close"])));
+        } else {
+          chartData.unshift(new Array(new Date(date[0], date[1] - 1, date[2]), parseFloat(val["4. close"])));
+        }
+
+        if (chartData.length == 0) {
+          //console.log("error" + d);
+        }
+        //callback(chartData);
+        // new Date(2014, 10, 15, 6, 30)],
+        // console.log(date);
+
+      });
 
       // Create the data table.
       var data = new google.visualization.DataTable();
 
       //data.addColumn('datetime', 'Time');
-      data.addColumn('date', 'Time');
+      data.addColumn('datetime', 'Time');
       data.addColumn('number', 'Close');
 
-      if (chartData.length == 0) {
+      /* if (chartData.length == 0) {
         //doChart(symbol, range);
         alert("error");
         // break;
-      }
+      } */
       data.addRows(chartData);
 
       $(".progress-bar").attr("style", "width: 100%;");
 
       // Set chart options
       var options = {
-        'title': 'Last Updated ' + metaData["3. Last Refreshed"] + " " + metaData["5. Time Zone"],
+        'title': 'Last Updated ' + metaData["3. Last Refreshed"]/* + " " + metaData["5. Time Zone"]*/,
         legend: 'none',
         hAxis: {
           title: '',
@@ -411,12 +425,20 @@
     $('#box').bind("enterKey", function (e) {
 
       //alert("Enter");
-      symbol = $('#box').val();
-      doChart(symbol, range);
+      /* symbol = $('#box').val();
+      google.charts.load('current', { packages: ['corechart', 'line'] });
+
+      google.charts.setOnLoadCallback(getData); */
+      //doChart();
     });
     $('#box').keyup(function (e) {
       if (e.keyCode == 13) {
-        $(this).trigger("enterKey");
+        //$(this).trigger("enterKey");
+        symbol = $('#box').val();
+        console.log(symbol);
+      google.charts.load('current', { packages: ['corechart', 'line'] });
+
+      google.charts.setOnLoadCallback(getData);
       }
     });
 
@@ -427,7 +449,11 @@
       range = this.textContent;
       $("#dropDownText").text(range);
 
-      doChart(symbol, range);
+      //doChart();
+      //getData();
+      google.charts.load('current', { packages: ['corechart', 'line'] });
+
+      google.charts.setOnLoadCallback(getData);
     });
 
 
