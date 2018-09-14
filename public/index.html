@@ -122,19 +122,20 @@
             <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" id="dropdownMenuButton"
               data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
               <span data-feather="calendar"></span>
-              <span id="dropDownText">Intraday</span>
+              <span id="dropDownText">Day</span>
             </button>
             <ul id="demolist" class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-              <li><a class="dropdown-item" href="#">Intraday</a></li>
-              <li><a class="dropdown-item" href="#">Daily</a></li>
-              <li><a class="dropdown-item" href="#">Weekly</a></li>
-              <li><a class="dropdown-item" href="#">Monthly</a></li>
+              <li><a class="dropdown-item" href="#">Day</a></li>
+              <li><a class="dropdown-item" href="#">Week</a></li>
+              <li><a class="dropdown-item" href="#">Month</a></li>
+              <li><a class="dropdown-item" href="#">Year</a></li>
+              <li><a class="dropdown-item" href="#">Full</a></li>
             </ul>
           </div>
         </div>
         <div class="progress">
-          <div class="progress-bar" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 10%;">
-          </div>
+          <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="60"
+            aria-valuemin="0" aria-valuemax="100" style="width: 10%;">Fetching Data</div>
         </div>
         <div id="chart_div"></div>
 
@@ -278,7 +279,7 @@
   <!-- Bootstrap core JavaScript
     ================================================== -->
   <!-- Placed at the end of the document so the pages load faster -->
-
+  <script type="text/javascript" src="js/options.js"></script>
   <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.3/jquery.min.js"></script>
   <!--script src="https://ajax.googleapis.com/ajax/libs/jquerymobile/1.4.5/jquery.mobile.min.js"></script-->
@@ -298,7 +299,7 @@
     var metaData;
     var url;
     var symbol = "MSFT";
-    var range = "Intraday";
+    var range = "Day";
     var rangeName;
 
 
@@ -312,22 +313,27 @@
 
     function getData() {
       $(".progress").show();
-      $(".progress-bar").attr("style", "width: 10%;");
+      $(".progress-bar").attr("style", "width: 100%;");
 
-      url = "https://www.alphavantage.co/query?function=TIME_SERIES_" + range + "&symbol=" + symbol + "&apikey=XUEAGBE7E6O2CUCH";
-
-      if (range == "Daily") {
+      if (range == "Week") {
         rangeName = "Time Series (Daily)";
-      } else if (range == "Weekly") {
+        url = "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=" + symbol + "&apikey=XUEAGBE7E6O2CUCH";
+      } else if (range == "Month") {
+        //rangeName = "Weekly Time Series";
+        rangeName = "Time Series (Daily)";
+        url = "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=" + symbol + "&apikey=XUEAGBE7E6O2CUCH";
+      } else if (range == "Year") {
+        //rangeName = "Monthly Time Series";
         rangeName = "Weekly Time Series";
-      } else if (range == "Monthly") {
+        url = "https://www.alphavantage.co/query?function=TIME_SERIES_WEEKLY&symbol=" + symbol + "&apikey=XUEAGBE7E6O2CUCH";
+      } else if (range == "Full") {
         rangeName = "Monthly Time Series";
+        url = "https://www.alphavantage.co/query?function=TIME_SERIES_MONTHLY&symbol=" + symbol + "&apikey=XUEAGBE7E6O2CUCH";
       } else {
         rangeName = "Time Series (5min)";
-        url = "https://www.alphavantage.co/query?function=TIME_SERIES_" + range + "&symbol=" + symbol + "&interval=5min&apikey=XUEAGBE7E6O2CUCH";
+        url = "https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=" + symbol + "&interval=5min&apikey=XUEAGBE7E6O2CUCH";
       }
-
-
+      //console.log(url);
 
       $.ajax({
         url: url,
@@ -350,7 +356,6 @@
 
       var chartData = new Array();
 
-
       metaData = d["Meta Data"];
 
       $('#stockName').text(metaData["2. Symbol"].toUpperCase());
@@ -359,13 +364,12 @@
       $.each(d[rangeName], function (key, val) {
         var date = key.split(" ")[0].split("-");
 
-        if (rangeName.includes("5min")) {
+        if (range == "Day") {
           var time = key.split(" ")[1].split(":");
           chartData.unshift(new Array(new Date(date[0], date[1] - 1, date[2], time[0], time[1], time[2]), parseFloat(val["4. close"])));
         } else {
           chartData.unshift(new Array(new Date(date[0], date[1] - 1, date[2]), parseFloat(val["4. close"])));
         }
-
         if (chartData.length == 0) {
           //console.log("error" + d);
         }
@@ -374,6 +378,7 @@
         // console.log(date);
 
       });
+      //console.log(chartData);
 
       // Create the data table.
       var data = new google.visualization.DataTable();
@@ -389,36 +394,9 @@
       } */
       data.addRows(chartData);
 
-      $(".progress-bar").attr("style", "width: 100%;");
-
-      // Set chart options
-      var options = {
-        'title': 'Last Updated ' + metaData["3. Last Refreshed"]/* + " " + metaData["5. Time Zone"]*/,
-        legend: 'none',
-        hAxis: {
-          title: '',
-          //showTextEvery: 0,
-          //slantedText: true,
-          //slantedTextAngle: 90,
-          //textPosition : 'in',
-          //viewWindow:{max:15},
-        },
-        vAxis: {
-          title: '',
-          format: 'currency',
-        },
-        legend: {
-          //position: 'right', textStyle: {color: 'blue', fontSize: 16},
-          position: 'right',
-        }
-        //legend:'none',
-
-        //chartArea:{left:20,top:0,width:'50%',height:'50%'},
-      };
-
       // Instantiate and draw our chart, passing in some options.
       var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
-      chart.draw(data, options);
+      chart.draw(data, getChartOptions(range));
       $(".progress").hide();
     }
 
@@ -435,10 +413,12 @@
       if (e.keyCode == 13) {
         //$(this).trigger("enterKey");
         symbol = $('#box').val();
-        console.log(symbol);
-      google.charts.load('current', { packages: ['corechart', 'line'] });
+        //console.log(symbol);
+        $(".progress-bar").attr("style", "width: 10%;");
 
-      google.charts.setOnLoadCallback(getData);
+        google.charts.load('current', { packages: ['corechart', 'line'] });
+
+        google.charts.setOnLoadCallback(getData);
       }
     });
 
