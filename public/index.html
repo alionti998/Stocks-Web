@@ -23,7 +23,7 @@
 <body>
   <nav class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0">
     <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="#">Stocks Web</a>
-    <input id="box" class="form-control form-control-dark w-100" type="text" placeholder="Search for symbol ex: MSFT, TSX:TD"
+    <input id="box" class="form-control form-control-dark w-100" type="text" placeholder="Search for symbol ex: MSFT, TSE:TD"
       aria-label="Search">
     <ul class="navbar-nav px-3">
       <li class="nav-item text-nowrap">
@@ -113,23 +113,38 @@
       <main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
         <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
           <h1 class="h2" id="stockName">Stock Name</h1>
+          <div class="btn-group mr-2" data-toggle="buttons">
+              <label class="btn btn-sm btn-outline-primary active">
+                <input type="checkbox" name="options" id="option1" autocomplete="off" checked> Close
+              </label>
+              <label class="btn btn-sm btn-outline-success">
+                <input type="checkbox" name="options" id="option2" autocomplete="off"> Open
+              </label>
+              <label class="btn btn-sm btn-outline-success">
+                <input type="checkbox" name="options" id="option3" autocomplete="off"> High
+              </label>
+              <label class="btn btn-sm btn-outline-success">
+                  <input type="checkbox" name="options" id="option3" autocomplete="off"> Low
+                </label>
+            </div>
           <div class="btn-toolbar mb-2 mb-md-0">
+          
             <div class="btn-group mr-2">
               <button class="btn btn-sm btn-outline-secondary">Share</button>
               <button class="btn btn-sm btn-outline-secondary" id="export">Export CSV</button>
             </div>
 
-            <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" id="dropdownMenuButton"
+            <button class="btn btn-sm btn-outline-info dropdown-toggle" type="button" id="dropdownMenuButton"
               data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
               <span data-feather="calendar"></span>
               <span id="dropDownText">Day</span>
             </button>
             <ul id="demolist" class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-              <li><a class="dropdown-item" href="#">Day</a></li>
-              <li><a class="dropdown-item" href="#">Week</a></li>
-              <li><a class="dropdown-item" href="#">Month</a></li>
-              <li><a class="dropdown-item" href="#">Year</a></li>
-              <li><a class="dropdown-item" href="#">Full</a></li>
+              <li><a class="dropdown-item btn-outline-info" href="#">Day</a></li>
+              <li><a class="dropdown-item btn-outline-info" href="#">Week</a></li>
+              <li><a class="dropdown-item btn-outline-info" href="#">Month</a></li>
+              <li><a class="dropdown-item btn-outline-info" href="#">Year</a></li>
+              <li><a class="dropdown-item btn-outline-info" href="#">Full</a></li>
             </ul>
           </div>
         </div>
@@ -301,6 +316,7 @@
     var symbol = "MSFT";
     var range = "Day";
     var rangeName;
+    var allData = new Array();
 
 
     // doChart();
@@ -358,7 +374,6 @@
 
       metaData = d["Meta Data"];
 
-      $('#stockName').text(metaData["2. Symbol"].toUpperCase());
       //$('#stockTime').text(metaData["3. Last Refreshed"] + " " + metaData["5. Time Zone"]);
       // $.each(d["Time Series (5min)"], function (key, val) {
       $.each(d[rangeName], function (key, val) {
@@ -378,12 +393,16 @@
         // console.log(date);
 
       });
-      //console.log(chartData);
+
+      if (range == "Day") {
+        $('#stockName').text(metaData["2. Symbol"].toUpperCase() + " " + chartData[chartData.length - 1][1]);
+      }
+
+      //console.log(chartData[chartData.length - 1]);
 
       // Create the data table.
       var data = new google.visualization.DataTable();
 
-      //data.addColumn('datetime', 'Time');
       data.addColumn('datetime', 'Time');
       data.addColumn('number', 'Close');
 
@@ -412,7 +431,9 @@
     $('#box').keyup(function (e) {
       if (e.keyCode == 13) {
         //$(this).trigger("enterKey");
-        symbol = $('#box').val();
+        symbol = $('#box').val().toUpperCase();
+        range = "Day";
+        $("#dropDownText").text(range);
         //console.log(symbol);
         $(".progress-bar").attr("style", "width: 10%;");
 
