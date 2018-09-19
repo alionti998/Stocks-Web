@@ -114,23 +114,27 @@
         <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
           <h1 class="h2" id="stockName">Stock Name</h1>
           <div class="btn-group mr-2" data-toggle="buttons">
-              <label class="btn btn-sm btn-outline-primary active">
-                <input type="checkbox" name="options" id="option1" autocomplete="off" checked> Close
-              </label>
-              <label class="btn btn-sm btn-outline-success">
-                <input type="checkbox" name="options" id="option2" autocomplete="off"> Open
-              </label>
-              <label class="btn btn-sm btn-outline-success">
-                <input type="checkbox" name="options" id="option3" autocomplete="off"> High
-              </label>
-              <label class="btn btn-sm btn-outline-success">
-                  <input type="checkbox" name="options" id="option3" autocomplete="off"> Low
-                </label>
-            </div>
+            <label class="btn btn-sm btn-outline-primary active">
+              <input type="checkbox" name="options" class="options" autocomplete="off" value="4. close" checked>
+              Close
+            </label>
+            <label class="btn btn-sm btn-outline-success">
+              <input type="checkbox" name="options" class="options" autocomplete="off" value="1. open">
+              Open
+            </label>
+            <label class="btn btn-sm btn-outline-success">
+              <input type="checkbox" name="options" class="options" autocomplete="off" value="2. high">
+              High
+            </label>
+            <label class="btn btn-sm btn-outline-success">
+              <input type="checkbox" name="options" class="options" autocomplete="off" value="3. low">
+              Low
+            </label>
+          </div>
           <div class="btn-toolbar mb-2 mb-md-0">
-          
+
             <div class="btn-group mr-2">
-              <button class="btn btn-sm btn-outline-secondary">Share</button>
+              <button class="btn btn-sm btn-outline-secondary" id="share">Share</button>
               <button class="btn btn-sm btn-outline-secondary" id="export">Export CSV</button>
             </div>
 
@@ -317,7 +321,7 @@
     var range = "Day";
     var rangeName;
     var allData = new Array();
-
+    var dataDisplay = ["4. close"];
 
     // doChart();
     // getData();
@@ -369,9 +373,18 @@
     // instantiates the pie chart, passes in the data and
     // draws it.
     function doChart(d) {
+      //console.log("doChart");
+
+      var today = new Date();
+      var dd = today.getDate();
+      var mm = today.getMonth(); //January is 0!
+      var yyyy = today.getFullYear();
 
       var chartData = new Array();
+      var tmp = new Array();
+      var previousClose;
 
+      allData = d;
       metaData = d["Meta Data"];
 
       //$('#stockTime').text(metaData["3. Last Refreshed"] + " " + metaData["5. Time Zone"]);
@@ -381,10 +394,28 @@
 
         if (range == "Day") {
           var time = key.split(" ")[1].split(":");
-          chartData.unshift(new Array(new Date(date[0], date[1] - 1, date[2], time[0], time[1], time[2]), parseFloat(val["4. close"])));
+          tmp = new Array(new Date(date[0], date[1] - 1, date[2], time[0], time[1], time[2]));
+
+          if (date[2] == dd - 1 && time[0] == 15 && time[1] == 55) {
+            console.log("here");
+            previousClose = parseFloat(val["4. close"]);
+          }
+
         } else {
-          chartData.unshift(new Array(new Date(date[0], date[1] - 1, date[2]), parseFloat(val["4. close"])));
+          tmp = new Array(new Date(date[0], date[1] - 1, date[2]));
+
         }
+
+        for (i = 0; i < dataDisplay.length; i++) {
+          tmp.push(parseFloat(val[dataDisplay[i]]));
+        }
+
+        tmp.push(previousClose);
+
+        //push previous close here
+
+        chartData.unshift(tmp);
+
         if (chartData.length == 0) {
           //console.log("error" + d);
         }
@@ -394,17 +425,29 @@
 
       });
 
+      console.log("previousCose " + previousClose);
+
+
+      console.log(chartData);
+
       if (range == "Day") {
         $('#stockName').text(metaData["2. Symbol"].toUpperCase() + " " + chartData[chartData.length - 1][1]);
+
       }
 
-      //console.log(chartData[chartData.length - 1]);
+      //console.log(d[rangeName]);
 
       // Create the data table.
       var data = new google.visualization.DataTable();
 
       data.addColumn('datetime', 'Time');
-      data.addColumn('number', 'Close');
+
+      for (i = 0; i < dataDisplay.length; i++) {
+        data.addColumn('number', dataDisplay[i].substring(3, 4).toUpperCase() + dataDisplay[i].substring(4, dataDisplay[i].length));
+      }
+
+      data.addColumn('number', 'Previous Close');
+      //add previous close column here
 
       /* if (chartData.length == 0) {
         //doChart(symbol, range);
@@ -446,18 +489,42 @@
     $("#export").click(function () {
       location.href = 'https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=' + metaData["2. Symbol"].toUpperCase() + '&apikey=XUEAGBE7E6O2CUCH&datatype=csv';
     });
+
+    $("#share").click(function () {
+
+      /* //var val = [];
+      $('[name=options]:checked').each(function (i) {
+        dataDisplay[i] = $(this).val();
+      });
+
+      console.log(dataDisplay); */
+
+    });
+
+    /*     $("input[name='options']").click(function () {
+          alert("clicked");
+        }); */
+
+    $('.options').change(function () {
+      dataDisplay = [];
+      $('[name=options]:checked').each(function (i) {
+        dataDisplay[i] = $(this).val();
+      });
+
+      google.charts.load('current', { packages: ['corechart', 'line'] });
+      google.charts.setOnLoadCallback(function () {
+        doChart(allData);
+      });
+      //console.log(dataDisplay);
+    });
+
     $('#demolist li').on('click', function () {
       range = this.textContent;
       $("#dropDownText").text(range);
 
-      //doChart();
-      //getData();
       google.charts.load('current', { packages: ['corechart', 'line'] });
-
       google.charts.setOnLoadCallback(getData);
     });
-
-
 
   </script>
 </body>
