@@ -304,6 +304,7 @@
   <!--script src="https://ajax.googleapis.com/ajax/libs/jquerymobile/1.4.5/jquery.mobile.min.js"></script-->
   <script src="js/popper.min.js"></script>
   <script src="js/bootstrap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.2/rollups/aes.js"></script>
   <!-- Icons -->
   <script src="https://unpkg.com/feather-icons/dist/feather.min.js"></script>
   <script>
@@ -334,21 +335,23 @@
       $(".progress").show();
       $(".progress-bar").attr("style", "width: 100%;");
 
+      var decrypted = CryptoJS.AES.decrypt("U2FsdGVkX1/ZxD7N23BBxhOErx8gvdZGQ/E6r3hE/I4r+wSqJjyt7hYybaoaPN3U", "StockSecret").toString(CryptoJS.enc.Utf8);
+
       if (range == "Week") {
         rangeName = "Time Series (Daily)";
-        url = "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=" + symbol + "&apikey=XUEAGBE7E6O2CUCH";
+        url = "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=" + symbol + "&apikey=" + decrypted;
       } else if (range == "Month") {
         rangeName = "Time Series (Daily)";
-        url = "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=" + symbol + "&apikey=XUEAGBE7E6O2CUCH";
+        url = "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=" + symbol + "&apikey=" + decrypted;
       } else if (range == "Year") {
         rangeName = "Weekly Time Series";
-        url = "https://www.alphavantage.co/query?function=TIME_SERIES_WEEKLY&symbol=" + symbol + "&apikey=XUEAGBE7E6O2CUCH";
+        url = "https://www.alphavantage.co/query?function=TIME_SERIES_WEEKLY&symbol=" + symbol + "&apikey=" + decrypted;
       } else if (range == "Full") {
         rangeName = "Monthly Time Series";
-        url = "https://www.alphavantage.co/query?function=TIME_SERIES_MONTHLY&symbol=" + symbol + "&apikey=XUEAGBE7E6O2CUCH";
+        url = "https://www.alphavantage.co/query?function=TIME_SERIES_MONTHLY&symbol=" + symbol + "&apikey=" + decrypted;
       } else {
         rangeName = "Time Series (5min)";
-        url = "https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=" + symbol + "&interval=5min&apikey=XUEAGBE7E6O2CUCH";
+        url = "https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=" + symbol + "&interval=5min&apikey=" + decrypted;
       }
 
       $.ajax({
@@ -470,6 +473,10 @@
       $('[name=options]:checked').each(function (i) {
         dataDisplay[i] = $(this).val();
       });
+
+      if (dataDisplay.length == 0) {
+
+      }
 
       google.charts.load('current', { packages: ['corechart', 'line'] });
       google.charts.setOnLoadCallback(function () {
